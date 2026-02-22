@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #F8F4E9;
+  --font-sans: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-gray-900;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

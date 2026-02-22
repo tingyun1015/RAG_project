@@ -1,0 +1,13 @@
+.DS_Store
+.DS_Store?
+node_modules/
+dist/
+build/
+.npm
+__pycache__/
+.env
+*.sqlite3
+*.db
+ollama_data/
+predictions/
+.venv/

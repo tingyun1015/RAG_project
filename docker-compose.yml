@@ -1,0 +1,64 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: rag-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - POSTGRES_URL=postgresql://postgres:postgres@database:5432/rag_db
+    depends_on:
+      - ollama
+      - database
+    volumes:
+      - ./backend:/app
+      # Mount root files if the code relies on them (e.g. dragonball_dataset)
+      - ./dragonball_dataset:/app/dragonball_dataset
+      - ./predictions:/app/predictions
+    restart: unless-stopped
+
+  database:
+    build:
+      context: ./database
+    container_name: rag-database
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=rag_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: rag-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+    # docker compose exec frontend npm run build
+    # docker compose logs --tail=50 backend
