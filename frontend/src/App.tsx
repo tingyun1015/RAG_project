@@ -1,5 +1,4 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
-import './App.css'
 import PresetQueries from './PresetQueries.tsx'
 import RAGPlayground from './RAGPlayground.tsx'
 import DefaultQueries from './DefaultQueries.tsx'
