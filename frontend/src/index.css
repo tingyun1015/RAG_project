@@ -3,6 +3,52 @@
 @theme {
   --color-brand-bg: #F8F4E9;
   --font-sans: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --color-brand-black: oklch(0.208 0.042 265.755);
+  --animate-fadeIn: fadeIn 0.8s ease-in-out;
+  --animate-rightIn: rightIn 0.5s ease-in-out;
+  --animate-leftIn: leftIn 0.5s ease-in-out;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes rightIn {
+    0% {
+      transform: translateX(20%);
+      opacity: 0;
+    }
+
+    70% {
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes leftIn {
+    0% {
+      transform: translateX(-20%);
+      opacity: 0;
+    }
+
+    70% {
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {

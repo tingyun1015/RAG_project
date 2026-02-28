@@ -29,11 +29,17 @@ export interface StreamEvent {
     details?: string | RetrievedDoc[];
     token?: string;
     references?: string[];
-    answer?: any; // Consider typing this more strictly if possible (e.g., Score[])
+    answer?: string;
     time?: string;
 }
 
 export interface Score {
     metrix: string;
-    value: string;
+    value: number;
+}
+
+export interface EvaluationData {
+    ground_truth: string;
+    ground_truth_refs: string[];
+    scores: Score[];
 }

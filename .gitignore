@@ -11,3 +11,4 @@ __pycache__/
 ollama_data/
 predictions/
 .venv/
+.vscode/

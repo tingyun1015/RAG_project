@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import ProcessElement from './ProcessElement'
+import PageLayout from './PageLayout'
 import type { Score, StreamEvent } from './types'
+import { RobotIcon } from './assets/RobotIcon'
 
 export default function RAGPlayground() {
     const [query, setQuery] = useState('');
     const [events, setEvents] = useState<StreamEvent[]>([]);
     const [finalAnswer, setFinalAnswer] = useState('');
     const [finalReferences, setFinalReferences] = useState<string[]>([]);
-    const [scores, setScores] = useState<Score[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSearch = async () => {
@@ -17,11 +18,8 @@ export default function RAGPlayground() {
         setEvents([]);
         setFinalAnswer('');
         setFinalReferences([]);
-        setScores([]);
 
         try {
-            // Note: In docker-compose, frontend talks to backend via localhost if browser is outside, 
-            // or proxy. Here we assume generic localhost access.
             const response = await fetch('http://localhost:8000/rag/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,7 +39,6 @@ export default function RAGPlayground() {
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
 
-                // Process all complete lines
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
                     if (line) {
@@ -57,11 +54,6 @@ export default function RAGPlayground() {
                                         setFinalReferences(event.references);
                                     }
                                     break;
-                                case 'evaluation':
-                                    if (event.answer) {
-                                        setScores(event.answer);
-                                    }
-                                    break;
                                 case 'complete':
                                     setIsLoading(false);
                                     break;
@@ -69,12 +61,11 @@ export default function RAGPlayground() {
                                     setEvents(prev => [...prev, event]);
                                     break;
                             }
-                        } catch (e) {
-                            console.error('Error parsing JSON:', line, e);
+                        } catch {
+                            console.error('Error parsing JSON:', line);
                         }
                     }
                 }
-                // Keep the last partial line in buffer
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
@@ -83,34 +74,58 @@ export default function RAGPlayground() {
         }
     };
 
-    return (
-        <div className="space-y-8">
-            <p>Ask any question you want to test the RAG system result, you can evaluation the result by yourself. 😉</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+    const leftContent = (
+        <div className="w-full relative flex flex-col pt-2 animate-rightIn">
+            <h2 className="text-[15px] font-bold tracking-[-0.3px] mb-2 leading-[normal]">Write Your Own Query</h2>
+            <p className="text-[13px] font-medium leading-[normal] mb-[32px] whitespace-pre-wrap">
+                Ask any question you want to test the RAG system result, you can evaluation the result by yourself. 😉
+            </p>
+
+            <div className="mb-[20px] relative">
                 <textarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Ask a question..."
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    rows={2}
-                    className="w-full px-5 py-4 rounded-sm border-1 focus:outline-none"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSearch();
+                        }
+                    }}
+                    rows={4}
+                    className="bg-[#fafafa] border border-[#9a9a9a] rounded-[6px] h-[123px] w-full p-4 overflow-y-auto text-[13px] text-black font-normal leading-[normal] tracking-[-0.24px] focus:outline-none focus:border-black resize-none shadow-sm"
                 />
-                <button
-                    onClick={handleSearch}
-                    disabled={isLoading}
-                    className={`px-6 py-2 font-semibold rounded-sm border w-full sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}`}
-                >
-                    Ask
-                </button>
             </div>
 
-            <ProcessElement
-                events={events}
-                isLoading={isLoading}
-                finalAnswer={finalAnswer}
-                finalReferences={finalReferences}
-                scores={scores}
-            />
+            <div className="flex justify-end w-full">
+                <button
+                    onClick={handleSearch}
+                    disabled={isLoading || !query.trim()}
+                    className={`bg-[#c73636] shadow-[0px_0px_4px_rgba(0,0,0,0.25)] rounded-[6px] px-[20px] py-[10px] flex items-center justify-center transition-all ${isLoading || !query.trim() ? 'bg-gray-400 opacity-80 shadow-none' : 'hover:-translate-y-0.5 hover:shadow-lg'}`}
+                >
+                    <span className="text-white text-[13px] font-bold leading-[normal]">Generate</span>
+                </button>
+            </div>
         </div>
-    )
+    );
+
+    const rightContent = (
+        <div className="p-8 pt-16 pb-32 max-w-[800px] mx-auto flex flex-col items-center">
+            {(events.length === 0 && !finalAnswer) ? (
+                <div className="flex flex-col items-center justify-center mt-[35vh]">
+                    <RobotIcon className="w-[60px] h-[60px] mx-auto mb-4 text-blue-500" />
+                    <p className="text-[16px] font-medium text-center">Ready for your creative question... 🧙</p>
+                </div>
+            ) : (
+                <ProcessElement
+                    events={events}
+                    isLoading={isLoading}
+                    finalAnswer={finalAnswer}
+                    finalReferences={finalReferences}
+                />
+            )}
+        </div>
+    );
+
+    return <PageLayout leftContent={leftContent} rightContent={rightContent} />;
 }

@@ -1,17 +1,21 @@
-import type { StreamEvent, Score } from './types'
+import type { StreamEvent, Score, EvaluationData } from './types'
 import { useEffect, useRef, useState } from 'react'
+import { RobotIcon } from './assets/RobotIcon'
+import EvaluationResult from './EvaluationResult'
 
 interface ProcessElementProps {
+	queryId?: number | '';
 	events: StreamEvent[];
 	isLoading: boolean;
 	finalAnswer: string;
 	finalReferences: string[];
-	scores: Score[];
 }
 
-export default function ProcessElement({ events, isLoading, finalAnswer, finalReferences, scores }: ProcessElementProps) {
+export default function ProcessElement({ events, isLoading, finalAnswer, finalReferences, queryId }: ProcessElementProps) {
 	const executionLogRef = useRef<HTMLDivElement>(null);
-	const [isExpanded, setIsExpanded] = useState(true);
+	const [isExpanded] = useState(true);
+	const [groundTruth, setGroundTruth] = useState<EvaluationData | null>(null);
+	const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
 
 	useEffect(() => {
 		if (executionLogRef.current) {
@@ -22,108 +26,115 @@ export default function ProcessElement({ events, isLoading, finalAnswer, finalRe
 		}
 	}, [events]);
 
-	useEffect(() => {
-		if (events.length === 0) return;
-		if (isLoading) setIsExpanded(true);
-		if (!isLoading) setIsExpanded(false);
-	}, [events, isLoading]);
+	const handleEvaluation = async (queryId: number) => {
+		setIsEvaluating(true);
+		try {
+			const res = await fetch('http://localhost:8000/rag/evaluate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ query_id: queryId, answer: finalAnswer, retrieved_refs: finalReferences })
+			})
+			if (res.ok) {
+				const data = await res.json()
+				setGroundTruth(data)
+			}
+		} catch (error) {
+			console.error("Evaluation error:", error)
+		} finally {
+			setIsEvaluating(false)
+		}
+	}
+
+	if (groundTruth) {
+		return <EvaluationResult data={groundTruth} predictionAnswer={finalAnswer} predictionReferences={finalReferences} />
+	}
 
 	return (
-		<div className="w-full space-y-8">
-			<div>
-				<div className="flex items-center justify-between py-4">
-					<h3 className="font-bold flex items-center gap-2">
-						<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+		<div className="w-full flex flex-col font-['Inter',sans-serif]">
+			{/* Execution Log */}
+			<div className="w-full mb-8">
+				<div className="w-full flex justify-between items-center mb-4">
+					<p className="font-bold text-[#c73636] text-[16px] tracking-[-0.32px] flex items-center gap-2 leading-[normal]">
 						Execution Log
-						{isLoading && <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>}
-					</h3>
-					{isExpanded && <button onClick={() => setIsExpanded(false)} className="text-gray-600 hover:text-gray-800">Show less</button>}
-					{!isExpanded && <button onClick={() => setIsExpanded(true)} className="text-gray-600 hover:text-gray-800">Show more</button>}
+						{isLoading && <span className="flex h-2 w-2 relative ml-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
+					</p>
 				</div>
 				<div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
 					<div className="overflow-hidden">
-						<div id="execution-log" ref={executionLogRef} className="bg-gray-300 h-[200px] overflow-y-auto scrolling-touch rounded-sm border-1 border-gray-400">
-							{events.map((ev, idx) => (
-								<div key={idx} className="pb-4 last:border-0 p-6 -mx-2">
-									<div className="flex items-center gap-3 mb-2">
-										<span className="tabular-nums">{ev.time}</span>
-										<span className="px-2.5 py-1 font-bold uppercase tracking-wider">
-											{ev.step.replace('_', ' ')}
-										</span>
+						<div id="execution-log" ref={executionLogRef} className="bg-[#e6e6e6] border border-[#9a9a9a] rounded-[6px] w-full h-[140px] overflow-y-auto p-[18px] py-5 flex flex-col gap-[14px]">
+							{events.length === 0 && !isLoading ? (
+								<p className="text-[12px] text-center mt-6">Waiting to start...</p>
+							) : events.map((ev, i) => (
+								<div key={i} className="flex flex-col pb-2">
+									<div className="flex justify-between items-center mb-1">
+										<p className="font-semibold text-[12px] text-black shrink-0 tracking-[-0.28px] leading-[normal]">
+											{ev.step.toUpperCase().replace(/_/g, ' ')}
+										</p>
+										<p className="text-[12px] font-semibold text-black tracking-[-0.22px] leading-[normal]">{ev.time}</p>
 									</div>
 									{ev.details && typeof ev.details === 'string' && (
-										<div className="mt-3 p-4 whitespace-pre-wrap leading-relaxed">
+										<p className="font-normal text-[12px] text-black whitespace-pre-wrap tracking-[-0.24px] leading-[normal]">
 											{ev.details}
-										</div>
+										</p>
 									)}
 									{ev.details && Array.isArray(ev.details) && (
-										<div className="mt-3 grid gap-3">
-											{ev.details.map((doc, i) => (
-												<div key={i} className="p-4 leading-relaxed">
-													<b className="mb-1 block">{doc.title}</b>
-													<span>{doc.content}</span>
+										<div className="mt-2 grid gap-3">
+											{ev.details.map((doc, idx) => (
+												<div key={idx} className="font-normal text-[12px] text-black whitespace-pre-wrap tracking-[-0.24px] leading-[normal]">
+													<span className="font-bold opacity-80">{doc.title}: </span>
+													{doc.content}
 												</div>
 											))}
 										</div>
 									)}
 								</div>
 							))}
-							{events.length === 0 && !isLoading && <div className="text-center py-10 italic">Waiting for events...</div>}
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-				<div className="lg:col-span-8 flex flex-col space-y-4">
-					<h3 className="font-bold flex items-center gap-3">
-						<div className="p-2 shrink-0">
-							<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-						</div>
-						Final Answer
-					</h3>
-					<div className="p-8 min-h-[100px] leading-loose whitespace-pre-wrap">
-						{finalAnswer || (isLoading ? <span className="animate-pulse font-bold">|</span> : <span className="italic block text-center mt-20">The AI's response will appear here once computing is done...</span>)}
+			{/* Answer */}
+			<div className="w-full mb-9">
+				<p className="font-bold text-[#c73636] text-[16px] tracking-[-0.32px] mb-4 leading-[normal]">Answer</p>
+				<div className="flex items-center gap-[23px] w-full">
+					<div className="w-[41px] h-[41px] shrink-0 text-[32px] leading-[normal] hidden sm:flex items-center justify-center">
+						<RobotIcon className="w-full h-full text-blue-500" />
 					</div>
-					<div className="flex flex-col space-y-4">
-						<h3 className="font-bold flex items-center gap-3">
-							<div className="p-2 shrink-0">
-								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-							</div>
-							Retrieved Content
-						</h3>
-						<div className="p-5 overflow-y-auto max-h-[300px] space-y-3">
-							{(finalReferences.length === 0 && !isLoading) && <span className="italic block text-center py-8">No references retrieved.</span>}
-							{isLoading ? <span className="text-center block py-8">
-								<svg className="animate-spin h-6 w-6 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-							</span> : finalReferences.map((el, index) => (
-								<div key={index} className="p-3 leading-relaxed break-words cursor-default">
-									{el}
-								</div>
-							))}
-						</div>
-					</div>
-				</div>
-				<div className="lg:col-span-4 flex flex-col space-y-8">
-					<div className="flex flex-col space-y-4">
-						<h3 className="font-bold flex items-center gap-3">
-							<div className="p-2 shrink-0">
-								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-							</div>
-							Evaluations
-						</h3>
-						<div className="p-5 space-y-3">
-							{(scores.length === 0 && !isLoading) && <span className="italic block text-center py-6">No evaluation scores.</span>}
-							{isLoading ? <span className="text-center block py-6">-</span> : scores.map((el, index) => (
-								<div key={index} className="flex justify-between items-center p-1">
-									<span className="font-semibold text-sm">{el.metrix}</span>
-									<span className="font-mono font-semibold text-sm">{el.value}</span>
-								</div>
-							))}
-						</div>
+					<div className="bg-[#fafafa] border border-[#9a9a9a] rounded-[6px] w-full flex-1 min-h-[123px] px-[22px] py-[18px]">
+						<p className="text-[13px] text-black whitespace-pre-wrap tracking-[-0.26px] leading-[normal]">
+							{finalAnswer || (isLoading ? <span className="animate-pulse">Analyzing query...</span> : "")}
+						</p>
 					</div>
 				</div>
 			</div>
+
+			{/* Retrieved References */}
+			<div className="w-full mb-8">
+				<p className="font-semibold text-[13px] tracking-[-0.26px] mb-[6px] leading-[normal]">Retrieved References</p>
+				<div className="bg-[#fafafa] border border-[#9a9a9a] rounded-[6px] w-full p-5 flex flex-col gap-[14px] h-[145px] overflow-y-auto">
+					{finalReferences.length === 0 && !isLoading ? (
+						<p className="text-[#5e5e5e] text-[12px] text-center mt-6">No references loaded.</p>
+					) : finalReferences.map((ref, i) => (
+						<p key={i} className="text-[14px] text-black tracking-[-0.28px] leading-[normal]">
+							{`> ${ref}`}
+						</p>
+					))}
+					{isLoading && finalReferences.length === 0 && (
+						<p className="text-black text-[14px] tracking-[-0.28px] leading-[normal] animate-pulse">{`> Retrieving documents...`}</p>
+					)}
+				</div>
+			</div>
+
+			{finalAnswer && queryId && <div className="flex justify-center w-full">
+				<button
+					onClick={() => handleEvaluation(queryId as number)}
+					disabled={isEvaluating}
+					className={`bg-[#c73636] shadow-[0px_0px_4px_rgba(0,0,0,0.25)] rounded-[6px] px-[20px] py-[10px] flex items-center justify-center transition-all ${isEvaluating ? 'bg-gray-400 opacity-80 shadow-none cursor-not-allowed' : 'hover:-translate-y-0.5 hover:shadow-lg'}`}
+				>
+					<span className="text-white text-[13px] font-bold leading-[normal]">Evaluate</span>
+				</button>
+			</div>}
 		</div>
 	)
 }

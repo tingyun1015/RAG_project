@@ -58,7 +58,33 @@ def rag_process(question: str):
     refs = [chunk.get("page_content") if isinstance(chunk, dict) else str(chunk) for chunk in return_chunks]
     yield json.dumps({"step": "answer_end", "message": "Done", "references": refs}) + "\n"
 
-    # 5. Score
+    # # 5. Score
+    # # Mock score
+    # scores = [
+    #     {"metrix": "Sentence Precision", "value": "1.00000"},
+    #     {"metrix": "Sentence Recall", "value": "1.00000"},
+    #     {"metrix": "Sentence F1", "value": "1.00000"},
+    #     {"metrix": "Word Recall", "value": "1.00000"},
+    #     {"metrix": "Word Precision", "value": "1.00000"},
+    #     {"metrix": "Word F1", "value": "1.00000"},
+    #     {"metrix": "ROUGELScore", "value": "1.00000"},
+    #     {"metrix": "Completeness", "value": "1.00000"},
+    #     {"metrix": "Hallucination", "value": "1.00000"},
+    #     {"metrix": "Irrelevance", "value": "1.00000"}
+    # ]
+    # yield json.dumps({"step": "evaluation", "message": "Evaluate", "answer": scores}) + "\n"
+    # import time
+    # time.sleep(1)
+
+    yield json.dumps({"step": "complete", "message": "Done", "answer": "End"}) + "\n"
+
+class EvaluationRequest(BaseModel):
+    query_id: int
+    answer: str
+    retrieved_refs: list[str]
+
+@app.post("/rag/evaluate")
+async def evaluate_rag(request: EvaluationRequest):
     # Mock score
     scores = [
         {"metrix": "Sentence Precision", "value": "1.00000"},
@@ -72,12 +98,11 @@ def rag_process(question: str):
         {"metrix": "Hallucination", "value": "1.00000"},
         {"metrix": "Irrelevance", "value": "1.00000"}
     ]
-    yield json.dumps({"step": "evaluation", "message": "Evaluate", "answer": scores}) + "\n"
-    import time
-    time.sleep(1)
-
-    yield json.dumps({"step": "complete", "message": "Done", "answer": "End"}) + "\n"
-
+    return {
+        "ground_truth": "the final answer",
+        "ground_truth_refs": [],
+        "scores": scores
+    }
 
 
 @app.post("/rag/stream")
