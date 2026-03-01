@@ -3,7 +3,7 @@ import numpy as np
 from ollama import Client
 import os
 import sys
-from My_RAG.summary_router_chain import summary_router_chain, get_contents_from_db
+from My_RAG.summary_router_chain import summary_router_chain
 from My_RAG.name_router_chain import name_router_chain
 from My_RAG.time_router_chain import time_router_chain
 from My_RAG.default_chain import default_chain

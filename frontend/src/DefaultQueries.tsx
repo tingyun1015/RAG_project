@@ -118,8 +118,8 @@ export default function DefaultQueries({ props }: { props: { language: string } 
 
 	const leftContent = (
 		<div className="w-full relative flex flex-col pt-2 animate-leftIn">
-			<h2 className="text-[15px] font-bold tracking-[-0.3px] mb-2 leading-[normal]">Use Default Queries</h2>
-			<p className="text-[13px] font-medium leading-[normal] mb-6 whitespace-pre-wrap">
+			<h2 className="text-[16px] font-bold tracking-[-0.3px] mb-2 leading-[normal]">Use Default Queries</h2>
+			<p className="text-[14px] font-medium leading-[normal] mb-6 whitespace-pre-wrap">
 				Use the queries from the dataset to test the RAG system result and evaluation. 🪄
 			</p>
 
@@ -145,7 +145,7 @@ export default function DefaultQueries({ props }: { props: { language: string } 
 
 			{query && (
 				<div className="animate-fadeIn">
-					<div className="bg-[#e6e6e6] border border-[#9a9a9a] rounded-[6px] h-[123px] w-full p-4 overflow-y-auto text-[12px] text-black font-normal leading-[normal] tracking-[-0.24px] whitespace-pre-wrap mb-[20px]">
+					<div className="bg-[#e6e6e6] border border-[#9a9a9a] rounded-[6px] h-[123px] w-full p-4 overflow-y-auto text-[14px] text-black font-normal leading-[normal] whitespace-pre-wrap mb-[20px]">
 						{query?.query || "\u00A0"}
 					</div>
 					<div className="flex justify-end w-full">

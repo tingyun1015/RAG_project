@@ -11,21 +11,27 @@ def ingest_data():
 
     # 1. Initialize schema
     print("Initializing database schema...")
+    cursor.execute("DROP TABLE IF EXISTS queries CASCADE;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS queries (
         id SERIAL PRIMARY KEY,
         query_id INT NOT NULL,
         query TEXT NOT NULL,
+        ground_truth JSONB,
         json_data JSONB,
         language VARCHAR(50) NOT NULL
     );
     """)
+    cursor.execute("DROP TABLE IF EXISTS documents CASCADE;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS documents (
         id SERIAL PRIMARY KEY,
         doc_id INT NOT NULL,
-        document TEXT NOT NULL,
-        language VARCHAR(50) NOT NULL
+        domain VARCHAR(50) NOT NULL,
+        language VARCHAR(50) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        jsonl JSONB
     );
     """)
     conn.commit()
@@ -40,11 +46,12 @@ def ingest_data():
                 data = json.loads(line)
                 query_id = data.get("query", {}).get("query_id")
                 query_text = data.get("query", {}).get("content", "")
+                ground_truth = json.dumps(data.get("ground_truth", {}))
                 json_data = json.dumps(data)
                 language = data.get("language", "en")
-                query_records.append((query_id, query_text, json_data, language))
+                query_records.append((query_id, query_text, ground_truth, json_data, language))
             
-            insert_query = "INSERT INTO queries (query_id, query, json_data, language) VALUES %s"
+            insert_query = "INSERT INTO queries (query_id, query, ground_truth, json_data, language) VALUES %s"
             # Clear existing data just in case
             cursor.execute("TRUNCATE TABLE queries RESTART IDENTITY")
             execute_values(cursor, insert_query, query_records)
@@ -61,11 +68,14 @@ def ingest_data():
             for line in f:
                 data = json.loads(line)
                 doc_id = data.get("doc_id")
-                document = data.get("content", "")
+                domain = data.get("domain")
                 language = data.get("language", "en")
-                doc_records.append((doc_id, document, language))
+                name = data.get("name", "")
+                content = data.get("content", "")
+                jsonl = json.dumps(data)
+                doc_records.append((doc_id, domain, language, name, content, jsonl))
             
-            insert_doc = "INSERT INTO documents (doc_id, document, language) VALUES %s"
+            insert_doc = "INSERT INTO documents (doc_id, domain, language, name, content, jsonl) VALUES %s"
             # Clear existing data just in case
             cursor.execute("TRUNCATE TABLE documents RESTART IDENTITY")
             execute_values(cursor, insert_doc, doc_records)

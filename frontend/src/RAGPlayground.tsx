@@ -76,8 +76,8 @@ export default function RAGPlayground() {
 
     const leftContent = (
         <div className="w-full relative flex flex-col pt-2 animate-rightIn">
-            <h2 className="text-[15px] font-bold tracking-[-0.3px] mb-2 leading-[normal]">Write Your Own Query</h2>
-            <p className="text-[13px] font-medium leading-[normal] mb-[32px] whitespace-pre-wrap">
+            <h2 className="text-[16px] font-bold tracking-[-0.3px] mb-2 leading-[normal]">Write Your Own Query</h2>
+            <p className="text-[14px] font-medium leading-[normal] mb-[32px] whitespace-pre-wrap">
                 Ask any question you want to test the RAG system result, you can evaluation the result by yourself. 😉
             </p>
 
@@ -93,7 +93,7 @@ export default function RAGPlayground() {
                         }
                     }}
                     rows={4}
-                    className="bg-[#fafafa] border border-[#9a9a9a] rounded-[6px] h-[123px] w-full p-4 overflow-y-auto text-[13px] text-black font-normal leading-[normal] tracking-[-0.24px] focus:outline-none focus:border-black resize-none shadow-sm"
+                    className="bg-[#fafafa] border border-[#9a9a9a] rounded-[6px] h-[123px] w-full p-4 overflow-y-auto text-[14px] text-black font-normal leading-[normal] focus:outline-none focus:border-black resize-none shadow-sm"
                 />
             </div>
 
