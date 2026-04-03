@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Query, StreamEvent, Score } from './types'
+import type { Query, StreamEvent } from './types'
 import ProcessElement from './ProcessElement'
 import PageLayout from './PageLayout'
 import { RobotIcon } from './assets/RobotIcon'

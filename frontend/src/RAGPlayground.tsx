@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ProcessElement from './ProcessElement'
 import PageLayout from './PageLayout'
-import type { Score, StreamEvent } from './types'
+import type { StreamEvent } from './types'
 import { RobotIcon } from './assets/RobotIcon'
 
 export default function RAGPlayground() {

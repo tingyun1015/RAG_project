@@ -9,9 +9,6 @@ from My_RAG.time_router_chain import time_router_chain
 from My_RAG.default_chain import default_chain
 from My_RAG.llm_router_chain import llm_router_chain
 
-import os
-import sys
-
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(backend_dir)
 from db.Connection import Connection
@@ -33,7 +30,6 @@ def router(query, language="en"):
     
     ## Step 1. keywords matching
     prediction, doc_id, matched_name = name_matcher(query, language)
-
     print("[Router] matching result: ", prediction, doc_id, matched_name)
     
     ## Step 2. summary chain

@@ -1,6 +1,7 @@
 from typing import List, Union
 import re
 from nltk.tokenize import sent_tokenize, word_tokenize
+import nltk
 from pysbd import Segmenter
 import jieba
 
@@ -47,6 +48,7 @@ def split_words(text: Union[List[str], str], language: str) -> List[str]:
     if language == 'zh':
         words = list(jieba.cut(text))
     elif language == 'en':
+        nltk.download('punkt_tab')
         words = word_tokenize(text.lower())
     else:
         # Fallback for other languages

@@ -9,8 +9,12 @@ For the original project and RAG details, please refer to [Original Project](htt
 - Optimise retrival and LLM evaluation scores (TBD).
 
 ### The Interaction Page
+
 <img src="./docs/interaction_page.png" alt="Interaction Page" style="max-width: 650px"></img>
 
+With Default Queries, we can evalute with ground-truth references:
+
+<img src="./docs/interaction_page-eval.png" alt="Interaction Eval Page" style="max-width: 650px"></img>
 #### Choose how you want to interact with the RAG system:
 ##### 1. Use Default Queries
 Run predefined queries from the dataset to test the RAG pipeline. The system will automatically evaluate its generated answers against the dataset's ground-truth references.

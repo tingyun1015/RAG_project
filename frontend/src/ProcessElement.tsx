@@ -1,4 +1,4 @@
-import type { StreamEvent, Score, EvaluationData } from './types'
+import type { StreamEvent, EvaluationData } from './types'
 import { useEffect, useRef, useState } from 'react'
 import { RobotIcon } from './assets/RobotIcon'
 import EvaluationResult from './EvaluationResult'
