@@ -9,34 +9,7 @@ def ingest_data():
     conn = psycopg2.connect(DB_URL)
     cursor = conn.cursor()
 
-    # 1. Initialize schema
-    print("Initializing database schema...")
-    cursor.execute("DROP TABLE IF EXISTS queries CASCADE;")
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS queries (
-        id SERIAL PRIMARY KEY,
-        query_id INT NOT NULL,
-        query TEXT NOT NULL,
-        ground_truth JSONB,
-        json_data JSONB,
-        language VARCHAR(50) NOT NULL
-    );
-    """)
-    cursor.execute("DROP TABLE IF EXISTS documents CASCADE;")
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS documents (
-        id SERIAL PRIMARY KEY,
-        doc_id INT NOT NULL,
-        domain VARCHAR(50) NOT NULL,
-        language VARCHAR(50) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        content TEXT NOT NULL,
-        jsonl JSONB
-    );
-    """)
-    conn.commit()
-
-    # 2. Ingest queries
+    # 1. Ingest queries
     query_file = os.path.join(os.path.dirname(__file__), "../dragonball_dataset/dragonball_queries.jsonl")
     if os.path.exists(query_file):
         print(f"Ingesting queries from {query_file}...")
@@ -63,6 +36,11 @@ def ingest_data():
     doc_file = os.path.join(os.path.dirname(__file__), "../dragonball_dataset/dragonball_docs.jsonl")
     if os.path.exists(doc_file):
         print(f"Ingesting documents from {doc_file}...")
+        mapping = {
+            "Finance": "company_name",
+            "Law": "court_name",
+            "Medical": "hospital_patient_name"
+        }
         with open(doc_file, 'r', encoding='utf-8') as f:
             doc_records = []
             for line in f:
@@ -70,7 +48,7 @@ def ingest_data():
                 doc_id = data.get("doc_id")
                 domain = data.get("domain")
                 language = data.get("language", "en")
-                name = data.get("name", "")
+                name = data.get(mapping[domain], "test")
                 content = data.get("content", "")
                 jsonl = json.dumps(data)
                 doc_records.append((doc_id, domain, language, name, content, jsonl))
